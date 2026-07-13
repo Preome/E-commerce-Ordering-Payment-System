@@ -48,9 +48,10 @@ class BKashPaymentProvider(PaymentProvider):
         if not self._token:
             self._get_token()
         return {
-            "Authorization": f"Bearer {self._token}",
-            "X-App-Key": settings.BKASH_APP_KEY,
+            "Accept": "application/json",
             "Content-Type": "application/json",
+            "Authorization": self._token,
+            "X-APP-Key": settings.BKASH_APP_KEY,
         }
 
     def create_payment(self, order, **kwargs):

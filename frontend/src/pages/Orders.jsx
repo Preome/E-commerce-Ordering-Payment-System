@@ -17,14 +17,8 @@ export default function Orders() {
 
   const confirmLatestPendingPayment = async () => {
     try {
-      const res = await orderAPI.list();
-      const allOrders = res.data.results || res.data;
-      const pendingOrder = allOrders.find(o => o.status === 'pending');
-      if (pendingOrder) {
-        await paymentAPI.confirm({ order_id: pendingOrder.id, provider: 'bkash' });
-        toast.success('Payment confirmed!');
-        loadOrders();
-      }
+      toast.success('Payment confirmed via bKash callback!');
+      loadOrders();
     } catch {
       toast.error('Payment confirmation failed. You can verify from Payments page.');
     }
@@ -57,8 +51,6 @@ export default function Orders() {
       const res = await orderAPI.checkout(orderId, { provider: 'stripe', currency: 'usd' });
       if (res.data.success) {
         toast.success('Payment initiated! Redirecting...');
-        await paymentAPI.confirm({ order_id: orderId, provider: 'stripe' });
-        toast.success('Payment confirmed!');
         loadOrders();
       }
     } catch {

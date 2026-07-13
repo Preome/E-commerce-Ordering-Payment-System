@@ -149,9 +149,16 @@ def bkash_callback(request):
     logger.info(f"bKash callback received: paymentID={payment_id}, status={payment_status}")
 
     if payment_id:
-        payload = {'paymentID': payment_id}
-        if payment_status:
-            payload['statusMessage'] = payment_status
-        PaymentProcessor.process_webhook('bkash', payload)
+        from payments.models import Payment
+        payment = Payment.objects.filter(transaction_id=payment_id).first()
+        if payment:
+            logger.info(f"Calling confirm_payment for bKash payment {payment_id}")
+            result = PaymentProcessor.confirm_payment('bkash', payment_id)
+            logger.info(f"confirm_payment result: {result}")
+            if not result.get('success'):
+                result = PaymentProcessor.verify_payment('bkash', payment_id)
+                logger.info(f"verify_payment result: {result}")
+        else:
+            logger.warning(f"No Payment record found for transaction_id={payment_id}")
 
     return HttpResponseRedirect(f'{settings.FRONTEND_URL}/orders?payment=done')
