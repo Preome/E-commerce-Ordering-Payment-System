@@ -11,18 +11,9 @@ export default function Orders() {
   useEffect(() => {
     loadOrders();
     if (searchParams.get('payment') === 'done') {
-      confirmLatestPendingPayment();
+      toast.success('Payment confirmed via bKash callback!');
     }
   }, []);
-
-  const confirmLatestPendingPayment = async () => {
-    try {
-      toast.success('Payment confirmed via bKash callback!');
-      loadOrders();
-    } catch {
-      toast.error('Payment confirmation failed. You can verify from Payments page.');
-    }
-  };
 
   const loadOrders = async () => {
     try {
@@ -68,73 +59,109 @@ export default function Orders() {
     }
   };
 
-  const statusColor = (status) => {
-    switch (status) {
-      case 'paid': return '#27ae60';
-      case 'pending': return '#f39c12';
-      case 'canceled': return '#e74c3c';
-      default: return '#666';
-    }
-  };
-
-  if (loading) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 28 }}>My Orders</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {[1,2,3].map(i => (
+            <div key={i} className="card">
+              <div className="skeleton" style={{ height: 20, width: '25%', marginBottom: 12 }} />
+              <div className="skeleton" style={{ height: 14, width: '60%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 14, width: '40%' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 20 }}>My Orders</h2>
+    <div className="page-wrapper">
+      <div className="section-header">
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>My Orders</h2>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          {orders.length} order{orders.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
       {orders.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <p>No orders yet</p>
-          <Link to="/products" className="btn btn-primary" style={{ marginTop: 15 }}>Browse Products</Link>
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-state-icon">&#128230;</div>
+            <h3>No orders yet</h3>
+            <p>Start shopping to see your orders here</p>
+            <Link to="/products" className="btn btn-primary">Browse Products</Link>
+          </div>
         </div>
       ) : (
-        orders.map((order) => (
-          <div key={order.id} className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h4>Order #{order.id.slice(0, 8)}...</h4>
-                <p style={{ color: '#666', fontSize: '0.85rem' }}>
-                  {new Date(order.created_at).toLocaleString()}
-                </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>${order.total_amount}</p>
-                <span className={`badge badge-${order.status === 'paid' ? 'active' : order.status === 'canceled' ? 'inactive' : ''}`}
-                  style={order.status === 'pending' ? { background: '#fff3cd', color: '#856404' } : {}}>
-                  {order.status}
-                </span>
-              </div>
-            </div>
-
-            {order.items && order.items.length > 0 && (
-              <div style={{ marginTop: 10, borderTop: '1px solid #eee', paddingTop: 10 }}>
-                {order.items.map((item) => (
-                  <p key={item.id} style={{ fontSize: '0.9rem', color: '#555' }}>
-                    {item.quantity}x {item.product_name || 'Product'} - ${item.subtotal}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {orders.map((order, idx) => (
+            <div key={order.id} className={`card order-card status-${order.status} animate-in`}
+              style={{ animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
+              <div className="order-header">
+                <div>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 2 }}>
+                    Order #{order.id.slice(0, 8)}...
+                  </h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    {new Date(order.created_at).toLocaleString()}
                   </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text)' }}>
+                    ${order.total_amount}
+                  </p>
+                  <span className={`badge ${
+                    order.status === 'paid' ? 'badge-success' :
+                    order.status === 'pending' ? 'badge-warning' :
+                    order.status === 'canceled' ? 'badge-danger' : 'badge-info'
+                  }`}>
+                    {order.status === 'paid' && '✓ '}
+                    {order.status === 'pending' && '◷ '}
+                    {order.status === 'canceled' && '✕ '}
+                    {order.status}
+                  </span>
+                </div>
+              </div>
+
+              {order.items && order.items.length > 0 && (
+                <div className="order-items">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="order-item">
+                      <div className="order-item-name">
+                        <span className="order-item-qty">{item.quantity}x</span>
+                        {item.product_name || 'Product'}
+                      </div>
+                      <span style={{ fontWeight: 600 }}>${item.subtotal}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="order-actions">
+                {order.status === 'pending' && (
+                  <>
+                    <button className="btn btn-primary btn-sm" onClick={() => retryPayment(order.id)}>
+                      Retry Payment
+                    </button>
+                    <button className="btn btn-sm btn-secondary"
+                      style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                      onClick={() => cancelOrder(order.id)}>
+                      Cancel
+                    </button>
+                  </>
+                )}
+                {order.payments && order.payments.map((p) => (
+                  <button key={p.id} className="btn btn-sm btn-secondary"
+                    onClick={() => verifyPayment(p.id)}>
+                    Verify {p.provider}
+                  </button>
                 ))}
               </div>
-            )}
-
-            <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {order.status === 'pending' && (
-                <>
-                  <button className="btn btn-primary btn-sm" onClick={() => retryPayment(order.id)}>
-                    Retry Payment
-                  </button>
-                  <button className="btn btn-sm" style={{ border: '1px solid #e74c3c', color: '#e74c3c' }} onClick={() => cancelOrder(order.id)}>
-                    Cancel Order
-                  </button>
-                </>
-              )}
-              {order.payments && order.payments.map((p) => (
-                <button key={p.id} className="btn btn-sm" onClick={() => verifyPayment(p.id)}>
-                  Verify {p.provider} ({p.status})
-                </button>
-              ))}
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
     </div>
   );

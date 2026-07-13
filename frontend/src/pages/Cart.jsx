@@ -21,18 +21,14 @@ function StripeForm({ clientSecret, paymentId, orderId, onSuccess }) {
     try {
       const { error } = await stripe.confirmPayment({
         elements,
-        confirmParams: {
-          return_url: window.location.origin + '/orders',
-        },
+        confirmParams: { return_url: window.location.origin + '/orders' },
         redirect: 'if_required',
       });
 
       if (error) {
         toast.error(error.message || 'Payment failed');
       } else {
-        try {
-          await paymentAPI.confirm({ order_id: orderId, provider: 'stripe' });
-        } catch {}
+        try { await paymentAPI.confirm({ order_id: orderId, provider: 'stripe' }); } catch {}
         toast.success('Payment successful!');
         onSuccess();
       }
@@ -46,13 +42,13 @@ function StripeForm({ clientSecret, paymentId, orderId, onSuccess }) {
   return (
     <form onSubmit={handleSubmit}>
       <PaymentElement />
-      <button
-        type="submit"
-        className="btn btn-primary"
-        disabled={!stripe || processing}
-        style={{ marginTop: 15, padding: '12px 30px', width: '100%' }}
-      >
-        {processing ? 'Processing...' : 'Pay Now'}
+      <button type="submit" className="btn btn-primary btn-lg" disabled={!stripe || processing}
+        style={{ marginTop: 20, width: '100%' }}>
+        {processing ? (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="spinner" /> Processing...
+          </span>
+        ) : 'Pay Now'}
       </button>
     </form>
   );
@@ -93,17 +89,15 @@ export default function Cart() {
     setLoading(true);
     try {
       const res = await orderAPI.create({
-        items: cart.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-        })),
+        items: cart.map(item => ({ product_id: item.product_id, quantity: item.quantity })),
       });
-
       const order = res.data.order;
       setOrderId(order.id);
       toast.success('Order placed! Initiating payment...');
 
-      const checkoutRes = await orderAPI.checkout(order.id, { provider, currency: provider === 'bkash' ? 'bdt' : 'usd' });
+      const checkoutRes = await orderAPI.checkout(order.id, {
+        provider, currency: provider === 'bkash' ? 'bdt' : 'usd'
+      });
 
       if (checkoutRes.data.success) {
         const pd = checkoutRes.data.payment_data;
@@ -134,12 +128,19 @@ export default function Cart() {
 
   if (paymentData && paymentData.client_secret) {
     return (
-      <div style={{ maxWidth: 500, margin: '0 auto' }}>
-        <h2 style={{ marginBottom: 20 }}>Complete Payment</h2>
-        <div className="card">
-          <p style={{ marginBottom: 15, color: '#666' }}>
-            Order Total: <strong>${total.toFixed(2)}</strong>
-          </p>
+      <div className="page-wrapper" style={{ maxWidth: 560, margin: '0 auto' }}>
+        <div className="card animate-in" style={{ padding: 40 }}>
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{
+              width: 60, height: 60, borderRadius: '50%', background: 'var(--primary-50)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 16px', fontSize: '1.5rem'
+            }}>&#128179;</div>
+            <h2 style={{ fontSize: '1.4rem', marginBottom: 4 }}>Complete Payment</h2>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Order Total: <strong style={{ color: 'var(--text)' }}>${total.toFixed(2)}</strong>
+            </p>
+          </div>
           <Elements stripe={stripePromise} options={{ clientSecret: paymentData.client_secret }}>
             <StripeForm
               clientSecret={paymentData.client_secret}
@@ -154,58 +155,106 @@ export default function Cart() {
   }
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 20 }}>Shopping Cart</h2>
+    <div className="page-wrapper">
+      <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 28 }}>Shopping Cart</h2>
+
       {cart.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <p>Your cart is empty</p>
-          <button className="btn btn-primary" onClick={() => navigate('/products')} style={{ marginTop: 15 }}>
-            Browse Products
-          </button>
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-state-icon">&#128722;</div>
+            <h3>Your cart is empty</h3>
+            <p>Add some products to get started</p>
+            <button className="btn btn-primary" onClick={() => navigate('/products')}>
+              Browse Products
+            </button>
+          </div>
         </div>
       ) : (
-        <>
-          {cart.map((item, index) => (
-            <div key={index} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h4>{item.name}</h4>
-                <p style={{ color: '#666' }}>${item.price} each</p>
+        <div className="cart-layout">
+          <div>
+            {cart.map((item, index) => (
+              <div key={index} className="card animate-in"
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', animationDelay: `${index * 0.05}s`, opacity: 0 }}>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 2 }}>{item.name}</h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>${item.price} each</p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', border: '2px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', overflow: 'hidden'
+                  }}>
+                    <button onClick={() => updateQuantity(index, item.quantity - 1)}
+                      style={{ padding: '6px 10px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontWeight: 600 }}>
+                      -
+                    </button>
+                    <span style={{ padding: '6px 12px', fontWeight: 600, fontSize: '0.9rem' }}>{item.quantity}</span>
+                    <button onClick={() => updateQuantity(index, item.quantity + 1)}
+                      style={{ padding: '6px 10px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontWeight: 600 }}>
+                      +
+                    </button>
+                  </div>
+                  <span style={{ fontWeight: 700, minWidth: 80, textAlign: 'right', color: 'var(--primary)' }}>
+                    ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                  </span>
+                  <button onClick={() => removeItem(index)}
+                    style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1.2rem', padding: 4 }}>
+                    &#10005;
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input
-                  type="number" min="1" value={item.quantity}
-                  onChange={(e) => updateQuantity(index, parseInt(e.target.value) || 1)}
-                  style={{ width: 60, padding: 5, textAlign: 'center', border: '1px solid #ddd', borderRadius: 5 }}
-                />
-                <span style={{ fontWeight: 'bold', minWidth: 80 }}>${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                <button onClick={() => removeItem(index)} style={{ background: 'none', border: 'none', color: '#e74c3c', cursor: 'pointer', fontSize: '1.2rem' }}>
-                  &times;
-                </button>
-              </div>
-            </div>
-          ))}
-          <div className="card" style={{ textAlign: 'right', fontSize: '1.3rem' }}>
-            <strong>Total: ${total.toFixed(2)}</strong>
+            ))}
           </div>
 
-          <div className="card" style={{ marginTop: 15 }}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: 10 }}>Payment Method</label>
-            <div style={{ display: 'flex', gap: 15 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                <input type="radio" name="provider" value="stripe" checked={provider === 'stripe'} onChange={() => setProvider('stripe')} />
-                Stripe (Card)
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                <input type="radio" name="provider" value="bkash" checked={provider === 'bkash'} onChange={() => setProvider('bkash')} />
-                bKash
-              </label>
+          <div>
+            <div className="card cart-summary animate-in" style={{ padding: 28 }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 20 }}>Order Summary</h3>
+              <div className="summary-row">
+                <span style={{ color: 'var(--text-secondary)' }}>Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+                <span style={{ fontWeight: 600 }}>${total.toFixed(2)}</span>
+              </div>
+              <div className="summary-row">
+                <span style={{ color: 'var(--text-secondary)' }}>Shipping</span>
+                <span style={{ fontWeight: 600, color: 'var(--success)' }}>Free</span>
+              </div>
+              <div className="summary-row total">
+                <span>Total</span>
+                <span style={{ color: 'var(--primary)' }}>${total.toFixed(2)}</span>
+              </div>
+
+              <div style={{ marginTop: 24 }}>
+                <label style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 12, display: 'block' }}>Payment Method</label>
+                <div className="payment-methods">
+                  <div className={`payment-method ${provider === 'stripe' ? 'active' : ''}`}
+                    onClick={() => setProvider('stripe')}>
+                    <div className="payment-method-icon" style={{ background: '#eef2ff', color: '#635bff' }}>S</div>
+                    <div className="payment-method-info">
+                      <h4>Stripe</h4>
+                      <p>Credit/Debit Card</p>
+                    </div>
+                  </div>
+                  <div className={`payment-method ${provider === 'bkash' ? 'active' : ''}`}
+                    onClick={() => setProvider('bkash')}>
+                    <div className="payment-method-icon" style={{ background: '#fce7f3', color: '#be185d' }}>bK</div>
+                    <div className="payment-method-info">
+                      <h4>bKash</h4>
+                      <p>Mobile Payment</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button className="btn btn-primary btn-lg" onClick={placeOrder} disabled={loading}
+                style={{ marginTop: 24, width: '100%' }}>
+                {loading ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                    <span className="spinner" /> Processing...
+                  </span>
+                ) : 'Place Order & Pay'}
+              </button>
             </div>
           </div>
-
-          <button className="btn btn-primary" onClick={placeOrder} disabled={loading} style={{ marginTop: 15, padding: '12px 30px' }}>
-            {loading ? 'Processing...' : 'Place Order & Pay'}
-          </button>
-        </>
+        </div>
       )}
     </div>
   );

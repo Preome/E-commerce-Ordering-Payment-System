@@ -19,11 +19,12 @@ export default function ProductDetail() {
 
   const loadProduct = async () => {
     try {
+      setLoading(true);
       const res = await productAPI.get(id);
       setProduct(res.data);
       const recRes = await productAPI.getRecommendations(id);
       setRecommendations(recRes.data.recommendations || []);
-    } catch (err) {
+    } catch {
       toast.error('Product not found');
     } finally {
       setLoading(false);
@@ -47,42 +48,100 @@ export default function ProductDetail() {
     toast.success('Added to cart!');
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (!product) return <p>Product not found</p>;
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <div className="card" style={{ display: 'flex', gap: 40, padding: 30 }}>
+          <div className="skeleton" style={{ flex: 1, minHeight: 350, borderRadius: 12 }} />
+          <div style={{ flex: 1 }}>
+            <div className="skeleton" style={{ height: 32, width: '60%', marginBottom: 12 }} />
+            <div className="skeleton" style={{ height: 16, width: '30%', marginBottom: 16 }} />
+            <div className="skeleton" style={{ height: 40, width: '25%', marginBottom: 16 }} />
+            <div className="skeleton" style={{ height: 16, width: '100%', marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 16, width: '80%' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) return <div className="page-wrapper"><p>Product not found</p></div>;
 
   return (
-    <div>
-      <div className="card" style={{ display: 'flex', gap: 30, padding: 30 }}>
-        <div style={{ flex: 1, background: '#eee', borderRadius: 8, minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {product.image_url ? <img src={product.image_url} alt={product.name} style={{ maxWidth: '100%', borderRadius: 8 }} /> : <span>No Image</span>}
+    <div className="page-wrapper">
+      <div className="card animate-in" style={{ display: 'flex', gap: 40, padding: 30 }}>
+        <div style={{
+          flex: 1, background: 'linear-gradient(135deg, #e0e7ff, #f0f9ff)',
+          borderRadius: 12, minHeight: 350,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden'
+        }}>
+          {product.image_url ? (
+            <img src={product.image_url} alt={product.name}
+              style={{ maxWidth: '100%', maxHeight: 400, borderRadius: 8, objectFit: 'contain' }} />
+          ) : (
+            <span style={{ fontSize: '3rem', color: 'var(--text-muted)' }}>&#128247;</span>
+          )}
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '1.8rem' }}>{product.name}</h1>
-          <p style={{ color: '#666', margin: '5px 0' }}>SKU: {product.sku}</p>
-          <p style={{ color: '#666' }}>Category: {product.category_name || 'N/A'}</p>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0f3460', margin: '15px 0' }}>${product.price}</p>
-          <p style={{ color: product.stock > 0 ? '#27ae60' : '#e74c3c', marginBottom: 15 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {product.category_name && (
+            <span className="badge badge-primary" style={{ alignSelf: 'flex-start', marginBottom: 12 }}>
+              {product.category_name}
+            </span>
+          )}
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 4 }}>
+            {product.name}
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 16 }}>
+            SKU: {product.sku}
+          </p>
+          <p style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--primary)', marginBottom: 8 }}>
+            ${product.price}
+          </p>
+          <p style={{
+            color: product.stock > 0 ? 'var(--success)' : 'var(--danger)',
+            fontWeight: 600, marginBottom: 20, fontSize: '0.9rem',
+            display: 'flex', alignItems: 'center', gap: 6
+          }}>
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: product.stock > 0 ? 'var(--success)' : 'var(--danger)',
+              display: 'inline-block'
+            }} />
             {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
           </p>
-          <p style={{ marginBottom: 20, lineHeight: 1.6 }}>{product.description}</p>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 28 }}>
+            {product.description}
+          </p>
 
           {product.stock > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
-              <label>Qty:</label>
-              <input
-                type="number" min="1" max={product.stock}
-                value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                style={{ width: 70, padding: 8, border: '1px solid #ddd', borderRadius: 5 }}
-              />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Quantity</label>
+              <div style={{
+                display: 'flex', alignItems: 'center', border: '2px solid var(--border)',
+                borderRadius: 'var(--radius-sm)', overflow: 'hidden'
+              }}>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  style={{ padding: '8px 14px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontSize: '1rem', fontWeight: 600 }}>
+                  -
+                </button>
+                <span style={{ padding: '8px 18px', fontWeight: 600 }}>{quantity}</span>
+                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  style={{ padding: '8px 14px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontSize: '1rem', fontWeight: 600 }}>
+                  +
+                </button>
+              </div>
             </div>
           )}
 
           {user ? (
-            <button className="btn btn-primary" onClick={addToCart} disabled={product.stock === 0}>
-              Add to Cart
+            <button className="btn btn-primary btn-lg" onClick={addToCart} disabled={product.stock === 0}
+              style={{ alignSelf: 'flex-start' }}>
+              {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
             </button>
           ) : (
-            <button className="btn btn-primary" onClick={() => navigate('/login')}>
+            <button className="btn btn-primary btn-lg" onClick={() => navigate('/login')}
+              style={{ alignSelf: 'flex-start' }}>
               Login to Purchase
             </button>
           )}
@@ -90,13 +149,14 @@ export default function ProductDetail() {
       </div>
 
       {recommendations.length > 0 && (
-        <div style={{ marginTop: 30 }}>
-          <h3>Related Products</h3>
-          <div className="grid" style={{ marginTop: 15 }}>
+        <div style={{ marginTop: 40 }}>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 20 }}>Related Products</h3>
+          <div className="grid">
             {recommendations.map((rec) => (
-              <div key={rec.id} className="card" style={{ cursor: 'pointer' }} onClick={() => { navigate(`/products/${rec.id}`); window.location.reload(); }}>
-                <h4>{rec.name}</h4>
-                <p style={{ fontWeight: 'bold', color: '#0f3460' }}>${rec.price}</p>
+              <div key={rec.id} className="card card-interactive" style={{ cursor: 'pointer' }}
+                onClick={() => navigate(`/products/${rec.id}`)}>
+                <h4 style={{ fontSize: '1rem', marginBottom: 6 }}>{rec.name}</h4>
+                <p style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.1rem' }}>${rec.price}</p>
               </div>
             ))}
           </div>

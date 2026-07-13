@@ -2,14 +2,33 @@ import { Link } from 'react-router-dom';
 
 export default function Home() {
   return (
-    <div style={{ textAlign: 'center', padding: '60px 0' }}>
-      <h1 style={{ fontSize: '2.5rem', marginBottom: 15 }}>Welcome to E-Shop</h1>
-      <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: 30 }}>
-        Your one-stop destination for electronics, clothing, and more.
-      </p>
-      <Link to="/products" className="btn btn-primary" style={{ fontSize: '1.1rem', padding: '15px 40px' }}>
-        Browse Products
-      </Link>
+    <div>
+      <div className="hero">
+        <div className="hero-content container">
+          <h1 className="animate-in">Discover Amazing Products</h1>
+          <p className="animate-in animate-in-delay-1">
+            Shop the latest electronics, clothing, and accessories with secure payments
+            via Stripe and bKash.
+          </p>
+          <Link to="/products" className="btn animate-in animate-in-delay-2">
+            Browse Products
+          </Link>
+          <div className="hero-features animate-in animate-in-delay-3">
+            <div className="hero-feature">
+              <div className="hero-feature-icon">&#128722;</div>
+              <p>Easy Ordering</p>
+            </div>
+            <div className="hero-feature">
+              <div className="hero-feature-icon">&#128274;</div>
+              <p>Secure Payment</p>
+            </div>
+            <div className="hero-feature">
+              <div className="hero-feature-icon">&#9889;</div>
+              <p>Instant Delivery</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

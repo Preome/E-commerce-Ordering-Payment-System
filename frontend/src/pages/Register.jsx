@@ -9,6 +9,7 @@ export default function Register() {
     password: '', password_confirm: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -17,56 +18,93 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       await register(form);
-      toast.success('Registration successful!');
+      toast.success('Welcome to E-Shop!');
       navigate('/products');
     } catch (err) {
       const data = err.response?.data;
       if (data?.error) {
-        const msgs = Object.values(data.error).flat().join(' ');
-        setError(msgs);
+        setError(Object.values(data.error).flat().join(' '));
       } else {
         setError('Registration failed');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '40px auto' }}>
-      <div className="card">
-        <h2>Register</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} required />
+    <div className="auth-page">
+      <div className="auth-card animate-in">
+        <div className="card">
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 'var(--radius)',
+              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 16px', fontSize: '1.5rem', color: 'white'
+            }}>&#9997;&#65039;</div>
           </div>
-          <div className="form-group">
-            <label>Username</label>
-            <input type="text" name="username" value={form.username} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label>First Name</label>
-            <input type="text" name="first_name" value={form.first_name} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label>Last Name</label>
-            <input type="text" name="last_name" value={form.last_name} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input type="password" name="password_confirm" value={form.password_confirm} onChange={handleChange} required />
-          </div>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Register</button>
-        </form>
-        <p style={{ marginTop: 15, textAlign: 'center' }}>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
+          <h2>Create Account</h2>
+          <p className="auth-subtitle">Join E-Shop today</p>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="form-group">
+                <label>First Name</label>
+                <input type="text" name="first_name" value={form.first_name}
+                  onChange={handleChange} placeholder="John" />
+              </div>
+              <div className="form-group">
+                <label>Last Name</label>
+                <input type="text" name="last_name" value={form.last_name}
+                  onChange={handleChange} placeholder="Doe" />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input type="email" name="email" value={form.email}
+                onChange={handleChange} placeholder="you@example.com" required />
+            </div>
+            <div className="form-group">
+              <label>Username</label>
+              <input type="text" name="username" value={form.username}
+                onChange={handleChange} placeholder="johndoe" required />
+            </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input type="password" name="password" value={form.password}
+                onChange={handleChange} placeholder="Min 8 characters" required />
+            </div>
+            <div className="form-group">
+              <label>Confirm Password</label>
+              <input type="password" name="password_confirm" value={form.password_confirm}
+                onChange={handleChange} placeholder="Repeat password" required />
+            </div>
+            {error && (
+              <div style={{
+                padding: '12px 16px', borderRadius: 'var(--radius-sm)',
+                background: 'var(--danger-bg)', color: '#991b1b',
+                fontSize: '0.85rem', marginBottom: 20, fontWeight: 500
+              }}>
+                {error}
+              </div>
+            )}
+            <button type="submit" className="btn btn-primary" disabled={loading}
+              style={{ width: '100%', padding: '13px' }}>
+              {loading ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                  <span className="spinner" /> Creating account...
+                </span>
+              ) : 'Create Account'}
+            </button>
+          </form>
+          <p className="auth-footer">
+            Already have an account? <Link to="/login">Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

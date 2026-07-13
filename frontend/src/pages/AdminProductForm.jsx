@@ -62,10 +62,10 @@ export default function AdminProductForm() {
 
       if (isEdit) {
         await productAPI.update(id, data);
-        toast.success('Product updated');
+        toast.success('Product updated successfully');
       } else {
         await productAPI.create(data);
-        toast.success('Product created');
+        toast.success('Product created successfully');
       }
       navigate('/admin/products');
     } catch (err) {
@@ -73,8 +73,7 @@ export default function AdminProductForm() {
         const apiErrors = err.response.data;
         const fieldErrors = {};
         Object.keys(apiErrors).forEach(key => {
-          const val = Array.isArray(apiErrors[key]) ? apiErrors[key][0] : apiErrors[key];
-          fieldErrors[key] = val;
+          fieldErrors[key] = Array.isArray(apiErrors[key]) ? apiErrors[key][0] : apiErrors[key];
         });
         setErrors(fieldErrors);
       } else {
@@ -86,41 +85,51 @@ export default function AdminProductForm() {
   };
 
   return (
-    <div style={{ maxWidth: 600 }}>
-      <h2 style={{ marginBottom: 20 }}>{isEdit ? 'Edit Product' : 'Create Product'}</h2>
-      <div className="card">
+    <div className="page-wrapper" style={{ maxWidth: 720 }}>
+      <div className="section-header">
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>
+          {isEdit ? 'Edit Product' : 'New Product'}
+        </h2>
+      </div>
+
+      <div className="card animate-in">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Name *</label>
-            <input name="name" value={form.name} onChange={handleChange} />
+            <label>Product Name *</label>
+            <input name="name" value={form.name} onChange={handleChange}
+              placeholder="e.g. Wireless Headphones" />
             {errors.name && <span className="error">{errors.name}</span>}
           </div>
 
           <div className="form-group">
             <label>SKU *</label>
-            <input name="sku" value={form.sku} onChange={handleChange} />
+            <input name="sku" value={form.sku} onChange={handleChange}
+              placeholder="e.g. WH-1000XM5" />
             {errors.sku && <span className="error">{errors.sku}</span>}
           </div>
 
           <div className="form-group">
             <label>Description</label>
-            <textarea name="description" value={form.description} onChange={handleChange} rows="4" />
+            <textarea name="description" value={form.description} onChange={handleChange}
+              rows="4" placeholder="Product description..." />
           </div>
 
-          <div style={{ display: 'flex', gap: 15 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <div className="form-group" style={{ flex: 1 }}>
               <label>Price *</label>
-              <input name="price" type="number" step="0.01" min="0.01" value={form.price} onChange={handleChange} />
+              <input name="price" type="number" step="0.01" min="0.01" value={form.price}
+                onChange={handleChange} placeholder="0.00" />
               {errors.price && <span className="error">{errors.price}</span>}
             </div>
             <div className="form-group" style={{ flex: 1 }}>
               <label>Stock *</label>
-              <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} />
+              <input name="stock" type="number" min="0" value={form.stock}
+                onChange={handleChange} placeholder="0" />
               {errors.stock && <span className="error">{errors.stock}</span>}
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 15 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <div className="form-group" style={{ flex: 1 }}>
               <label>Status</label>
               <select name="status" value={form.status} onChange={handleChange}>
@@ -141,14 +150,21 @@ export default function AdminProductForm() {
 
           <div className="form-group">
             <label>Image URL</label>
-            <input name="image_url" value={form.image_url} onChange={handleChange} placeholder="https://..." />
+            <input name="image_url" value={form.image_url} onChange={handleChange}
+              placeholder="https://example.com/image.jpg" />
           </div>
 
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : isEdit ? 'Update Product' : 'Create Product'}
+          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+              {loading ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="spinner" /> Saving...
+                </span>
+              ) : isEdit ? 'Update Product' : 'Create Product'}
             </button>
-            <button type="button" className="btn" onClick={() => navigate('/admin/products')}>Cancel</button>
+            <button type="button" className="btn btn-secondary btn-lg" onClick={() => navigate('/admin/products')}>
+              Cancel
+            </button>
           </div>
         </form>
       </div>

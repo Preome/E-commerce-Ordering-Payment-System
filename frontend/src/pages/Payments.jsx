@@ -31,56 +31,93 @@ export default function Payments() {
   };
 
   const statusBadge = (status) => {
-    const colors = { success: '#27ae60', pending: '#f39c12', failed: '#e74c3c' };
-    return (
-      <span className="badge" style={{ background: colors[status] || '#666', color: 'white' }}>
-        {status}
-      </span>
-    );
+    const map = {
+      success: { class: 'badge-success', icon: '\u2713 ' },
+      pending: { class: 'badge-warning', icon: '\u25F7 ' },
+      failed: { class: 'badge-danger', icon: '\u2717 ' },
+    };
+    const s = map[status] || { class: 'badge-info', icon: '' };
+    return <span className={`badge ${s.class}`}>{s.icon}{status}</span>;
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 28 }}>Payment History</h2>
+        <div className="card">
+          <div className="skeleton" style={{ height: 300 }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 20 }}>Payment History</h2>
+    <div className="page-wrapper">
+      <div className="section-header">
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Payment History</h2>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          {payments.length} payment{payments.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
       {payments.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <p>No payments yet</p>
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-state-icon">&#128179;</div>
+            <h3>No payments yet</h3>
+            <p>Your payment history will appear here</p>
+          </div>
         </div>
       ) : (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Provider</th>
-              <th>Transaction ID</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((p) => (
-              <tr key={p.id}>
-                <td>#{(p.order_id || '').slice(0, 8)}...</td>
-                <td style={{ textTransform: 'capitalize' }}>{p.provider}</td>
-                <td style={{ fontSize: '0.8rem', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.transaction_id}</td>
-                <td>${p.amount} {p.currency}</td>
-                <td>{statusBadge(p.status)}</td>
-                <td>{new Date(p.created_at).toLocaleString()}</td>
-                <td>
-                  {p.status === 'pending' && (
-                    <button className="btn btn-sm btn-primary" onClick={() => verifyPayment(p.id)}>
-                      Verify
-                    </button>
-                  )}
-                </td>
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Provider</th>
+                <th>Order</th>
+                <th>Transaction ID</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {payments.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div className={`payment-icon ${p.provider}`}>
+                        {p.provider === 'stripe' ? 'S' : 'bK'}
+                      </div>
+                      <span style={{ textTransform: 'capitalize', fontWeight: 500 }}>{p.provider}</span>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                    #{(p.order_id || '').slice(0, 8)}...
+                  </td>
+                  <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.transaction_id}
+                  </td>
+                  <td style={{ fontWeight: 600 }}>
+                    ${p.amount} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{p.currency}</span>
+                  </td>
+                  <td>{statusBadge(p.status)}</td>
+                  <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {new Date(p.created_at).toLocaleString()}
+                  </td>
+                  <td>
+                    {p.status === 'pending' && (
+                      <button className="btn btn-sm btn-primary" onClick={() => verifyPayment(p.id)}>
+                        Verify
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

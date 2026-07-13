@@ -7,24 +7,33 @@ export default function Navbar() {
   return (
     <nav className="nav">
       <div className="container">
-        <Link to="/" style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>E-Shop</Link>
-        <div>
+        <Link to="/" className="nav-brand">E-Shop</Link>
+        <div className="nav-links">
           <Link to="/products">Products</Link>
           {user ? (
             <>
-              {user.is_staff && <Link to="/admin/products">Admin</Link>}
               <Link to="/cart">Cart</Link>
               <Link to="/orders">Orders</Link>
               <Link to="/payments">Payments</Link>
-              <span style={{ marginLeft: 15 }}>{user.email}</span>
-              <button className="btn btn-primary" onClick={logout} style={{ marginLeft: 10 }}>
-                Logout
-              </button>
+              {user.is_staff && <Link to="/admin/products">Admin</Link>}
+              <div className="nav-user">
+                <div className="nav-avatar">
+                  {user.email?.[0] || 'U'}
+                </div>
+                <span className="nav-email">{user.email}</span>
+                <button className="btn btn-sm" onClick={logout}
+                  style={{ background: 'rgba(255,255,255,0.15)', color: 'white', backdropFilter: 'blur(10px)' }}>
+                  Logout
+                </button>
+              </div>
             </>
           ) : (
             <>
               <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
+              <Link to="/register" className="btn btn-sm"
+                style={{ background: 'white', color: '#4f46e5', marginLeft: 4 }}>
+                Sign Up
+              </Link>
             </>
           )}
         </div>
