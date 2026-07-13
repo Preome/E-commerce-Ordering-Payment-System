@@ -1,13 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { orderAPI, paymentAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
 
-  useEffect(() => { loadOrders(); }, []);
+  useEffect(() => {
+    loadOrders();
+    if (searchParams.get('payment') === 'done') {
+      confirmLatestPendingPayment();
+    }
+  }, []);
+
+  const confirmLatestPendingPayment = async () => {
+    try {
+      const res = await orderAPI.list();
+      const allOrders = res.data.results || res.data;
+      const pendingOrder = allOrders.find(o => o.status === 'pending');
+      if (pendingOrder) {
+        await paymentAPI.confirm({ order_id: pendingOrder.id, provider: 'bkash' });
+        toast.success('Payment confirmed!');
+        loadOrders();
+      }
+    } catch {
+      toast.error('Payment confirmation failed. You can verify from Payments page.');
+    }
+  };
 
   const loadOrders = async () => {
     try {

@@ -4,7 +4,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from drf_yasg.utils import swagger_auto_schema
 
 from .models import Payment
@@ -137,3 +137,21 @@ def confirm_payment(request):
         'success': False,
         'error': result.get('error', 'Payment confirmation failed.'),
     }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+def bkash_callback(request):
+    """bKash redirects here after payment. Processes callback and redirects to frontend."""
+    from django.conf import settings
+    payment_id = request.GET.get('paymentID') or request.POST.get('paymentID')
+    payment_status = request.GET.get('status') or request.POST.get('status')
+
+    logger.info(f"bKash callback received: paymentID={payment_id}, status={payment_status}")
+
+    if payment_id:
+        payload = {'paymentID': payment_id}
+        if payment_status:
+            payload['statusMessage'] = payment_status
+        PaymentProcessor.process_webhook('bkash', payload)
+
+    return HttpResponseRedirect(f'{settings.FRONTEND_URL}/orders?payment=done')

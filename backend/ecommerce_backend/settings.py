@@ -185,6 +185,7 @@ BKASH_QUERY_URL = env('BKASH_QUERY_URL', default='')
 
 # Frontend
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:3000')
+BACKEND_URL = env('BACKEND_URL', default='http://localhost:8000')
 
 # Redis Cache
 REDIS_URL = env('REDIS_URL', default='')

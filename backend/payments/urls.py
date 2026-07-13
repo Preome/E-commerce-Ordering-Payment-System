@@ -8,4 +8,5 @@ urlpatterns = [
     path('confirm/', views.confirm_payment, name='payment-confirm'),
     path('webhook/stripe/', views.stripe_webhook, name='stripe-webhook'),
     path('webhook/bkash/', views.bkash_webhook, name='bkash-webhook'),
+    path('bkash/callback/', views.bkash_callback, name='bkash-callback'),
 ]

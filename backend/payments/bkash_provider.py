@@ -58,7 +58,7 @@ class BKashPaymentProvider(PaymentProvider):
 
         try:
             url = settings.BKASH_CHECKOUT_URL
-            callback_base = kwargs.get('callback_url', f"{settings.FRONTEND_URL}/orders")
+            callback_base = f"{settings.BACKEND_URL}/api/v1/payments/bkash/callback"
             payload = {
                 "mode": "0011",
                 "payerReference": order.user.email or "guest",
@@ -119,6 +119,10 @@ class BKashPaymentProvider(PaymentProvider):
 
             if data.get('statusCode') == '0000':
                 payment.mark_success(raw_response=data)
+                order = payment.order
+                if order.status == 'pending':
+                    order.mark_paid()
+                    order.reduce_stock_for_items()
                 return {'success': True, 'status': 'success', 'data': data}
             else:
                 payment.mark_failed(raw_response=data)
