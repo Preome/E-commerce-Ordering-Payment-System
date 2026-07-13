@@ -1,0 +1,139 @@
+import json
+import logging
+from rest_framework import generics, status, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+from drf_yasg.utils import swagger_auto_schema
+
+from .models import Payment
+from .serializers import PaymentSerializer, PaymentCreateSerializer
+from .strategy import PaymentProcessor
+
+logger = logging.getLogger('payments')
+
+
+class PaymentListView(generics.ListAPIView):
+    serializer_class = PaymentSerializer
+
+    def get_queryset(self):
+        return Payment.objects.filter(order__user=self.request.user).select_related('order')
+
+
+class PaymentDetailView(generics.RetrieveAPIView):
+    serializer_class = PaymentSerializer
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        return Payment.objects.filter(order__user=self.request.user).select_related('order')
+
+
+class PaymentVerifyView(generics.GenericAPIView):
+    @swagger_auto_schema(
+        operation_description="Verify a payment status with the provider",
+    )
+    def get(self, request, *args, **kwargs):
+        payment_id = kwargs.get('pk')
+        try:
+            payment = Payment.objects.get(id=payment_id, order__user=request.user)
+        except Payment.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Payment not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        result = PaymentProcessor.verify_payment(payment.provider, payment.transaction_id)
+
+        if result.get('verified'):
+            if payment.status != 'success':
+                payment.mark_success()
+                payment.order.mark_paid()
+                payment.order.reduce_stock_for_items()
+
+        return Response({
+            'success': True,
+            'verification': result,
+            'payment': PaymentSerializer(payment).data,
+        })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def stripe_webhook(request):
+    """Stripe webhook endpoint."""
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+
+    logger.info("Stripe webhook received")
+
+    result = PaymentProcessor.process_webhook(
+        'stripe',
+        payload=payload.decode('utf-8') if isinstance(payload, bytes) else payload,
+    )
+
+    if sig_header:
+        from payments.stripe_provider import stripe_provider
+        result = stripe_provider.process_webhook(payload if isinstance(payload, (str, bytes)) else json.dumps(payload), sig_header=sig_header)
+
+    return HttpResponse(
+        json.dumps(result),
+        status=200,
+        content_type='application/json'
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def bkash_webhook(request):
+    """bKash webhook/callback endpoint."""
+    payload = request.data
+
+    logger.info("bKash webhook received")
+
+    result = PaymentProcessor.process_webhook('bkash', payload)
+
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def confirm_payment(request):
+    """Manually confirm a payment after provider redirect."""
+    serializer = PaymentCreateSerializer(data=request.data, context={'request': request})
+    serializer.is_valid(raise_exception=True)
+
+    provider = serializer.validated_data['provider']
+    order_id = serializer.validated_data['order_id']
+
+    from orders.models import Order
+    try:
+        order = Order.objects.get(id=order_id, user=request.user, status='pending')
+    except Order.DoesNotExist:
+        return Response(
+            {'success': False, 'error': 'Pending order not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    payment = Payment.objects.filter(order=order, provider=provider, status='pending').first()
+    if not payment:
+        return Response(
+            {'success': False, 'error': 'No pending payment found for this order.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    result = PaymentProcessor.confirm_payment(provider, payment.transaction_id)
+
+    if result.get('success'):
+        order.mark_paid()
+        order.reduce_stock_for_items()
+        return Response({
+            'success': True,
+            'message': 'Payment confirmed.',
+            'order_status': order.status,
+        })
+
+    return Response({
+        'success': False,
+        'error': result.get('error', 'Payment confirmation failed.'),
+    }, status=status.HTTP_400_BAD_REQUEST)

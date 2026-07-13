@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: ecommerce_db
+    environment:
+      POSTGRES_DB: ecommerce_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecommerce_backend
+    environment:
+      - DJANGO_SECRET_KEY=your-production-secret-key-change-me
+      - DJANGO_DEBUG=False
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/ecommerce_db
+      - REDIS_URL=redis://redis:6379/0
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - BKASH_APP_KEY=${BKASH_APP_KEY}
+      - BKASH_APP_SECRET=${BKASH_APP_SECRET}
+      - BKASH_USERNAME=${BKASH_USERNAME}
+      - BKASH_PASSWORD=${BKASH_PASSWORD}
+      - BKASH_BASE_URL=${BKASH_BASE_URL}
+      - BKASH_CHECKOUT_URL=${BKASH_CHECKOUT_URL}
+      - BKASH_EXECUTE_URL=${BKASH_EXECUTE_URL}
+      - BKASH_QUERY_URL=${BKASH_QUERY_URL}
+      - FRONTEND_URL=http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - static_files:/app/staticfiles
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py seed_data &&
+             python manage.py collectstatic --noinput &&
+             gunicorn ecommerce_backend.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+
+  frontend:
+    image: node:18-alpine
+    container_name: ecommerce_frontend
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_files:
