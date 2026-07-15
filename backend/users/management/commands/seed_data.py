@@ -89,16 +89,16 @@ class Command(BaseCommand):
 
         self.stdout.write('Seeding products...')
         products_data = [
-            {'name': 'iPhone 15 Pro', 'sku': 'ELEC-001', 'description': 'Apple iPhone 15 Pro with A17 chip', 'price': 999.99, 'stock': 50, 'category': 'smartphones'},
-            {'name': 'Samsung Galaxy S24', 'sku': 'ELEC-002', 'description': 'Samsung Galaxy S24 Ultra', 'price': 899.99, 'stock': 40, 'category': 'smartphones'},
-            {'name': 'MacBook Pro 14"', 'sku': 'ELEC-003', 'description': 'Apple MacBook Pro 14 inch M3', 'price': 1999.99, 'stock': 25, 'category': 'laptops'},
-            {'name': 'Dell XPS 15', 'sku': 'ELEC-004', 'description': 'Dell XPS 15 laptop', 'price': 1299.99, 'stock': 30, 'category': 'laptops'},
-            {'name': 'Sony WH-1000XM5', 'sku': 'ELEC-005', 'description': 'Sony noise cancelling headphones', 'price': 349.99, 'stock': 60, 'category': 'headphones'},
-            {'name': 'Classic Cotton T-Shirt', 'sku': 'CLTH-001', 'description': '100% cotton casual t-shirt', 'price': 29.99, 'stock': 200, 'category': 'mens-wear'},
-            {'name': 'Summer Floral Dress', 'sku': 'CLTH-002', 'description': 'Lightweight floral summer dress', 'price': 59.99, 'stock': 150, 'category': 'womens-wear'},
-            {'name': 'Non-Stick Cookware Set', 'sku': 'HOME-001', 'description': '10-piece non-stick cookware set', 'price': 149.99, 'stock': 35, 'category': 'cookware'},
-            {'name': 'Python Crash Course', 'sku': 'BOOK-001', 'description': 'Hands-on programming introduction', 'price': 39.99, 'stock': 100, 'category': 'books'},
-            {'name': 'Yoga Mat Premium', 'sku': 'SPRT-001', 'description': 'Extra thick non-slip yoga mat', 'price': 49.99, 'stock': 80, 'category': 'sports'},
+            {'name': 'iPhone 15 Pro', 'sku': 'ELEC-001', 'description': 'Apple iPhone 15 Pro with A17 chip', 'price': 999.99, 'stock': 50, 'category': 'smartphones', 'image_url': 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&h=600&fit=crop'},
+            {'name': 'Samsung Galaxy S24', 'sku': 'ELEC-002', 'description': 'Samsung Galaxy S24 Ultra', 'price': 899.99, 'stock': 40, 'category': 'smartphones', 'image_url': 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&h=600&fit=crop'},
+            {'name': 'MacBook Pro 14"', 'sku': 'ELEC-003', 'description': 'Apple MacBook Pro 14 inch M3', 'price': 1999.99, 'stock': 25, 'category': 'laptops', 'image_url': 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=600&fit=crop'},
+            {'name': 'Dell XPS 15', 'sku': 'ELEC-004', 'description': 'Dell XPS 15 laptop', 'price': 1299.99, 'stock': 30, 'category': 'laptops', 'image_url': 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=800&h=600&fit=crop'},
+            {'name': 'Sony WH-1000XM5', 'sku': 'ELEC-005', 'description': 'Sony noise cancelling headphones', 'price': 349.99, 'stock': 60, 'category': 'headphones', 'image_url': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=600&fit=crop'},
+            {'name': 'Classic Cotton T-Shirt', 'sku': 'CLTH-001', 'description': '100% cotton casual t-shirt', 'price': 29.99, 'stock': 200, 'category': 'mens-wear', 'image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=600&fit=crop'},
+            {'name': 'Summer Floral Dress', 'sku': 'CLTH-002', 'description': 'Lightweight floral summer dress', 'price': 59.99, 'stock': 150, 'category': 'womens-wear', 'image_url': 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&h=600&fit=crop'},
+            {'name': 'Non-Stick Cookware Set', 'sku': 'HOME-001', 'description': '10-piece non-stick cookware set', 'price': 149.99, 'stock': 35, 'category': 'cookware', 'image_url': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop'},
+            {'name': 'Python Crash Course', 'sku': 'BOOK-001', 'description': 'Hands-on programming introduction', 'price': 39.99, 'stock': 100, 'category': 'books', 'image_url': 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=800&h=600&fit=crop'},
+            {'name': 'Yoga Mat Premium', 'sku': 'SPRT-001', 'description': 'Extra thick non-slip yoga mat', 'price': 49.99, 'stock': 80, 'category': 'sports', 'image_url': 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800&h=600&fit=crop'},
         ]
 
         count = 0
