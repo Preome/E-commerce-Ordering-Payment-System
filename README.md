@@ -14,17 +14,61 @@ Full-stack backend system for managing users, products, orders, and payments wit
 
 This repository includes all required deliverables:
 
-- **README.md** - Full system documentation (this file)
-- **Migrations** - All Django database migrations (`backend/*/migrations/`)
-- **Docker Configuration** - `docker-compose.yml` + `backend/Dockerfile` for full containerized deployment
+### README.md
+- Full system documentation (this file)
+- System architecture diagram
+- ERD (Entity Relationship Diagram)
+- API documentation with all endpoints
+- Payment flow diagrams (Stripe & bKash)
+- Environment configuration guide
+- ngrok setup documentation
+
+### Migrations
+All Django database migrations are included and committed:
+
+```
+backend/
+├── users/migrations/
+│   ├── __init__.py
+│   └── 0001_initial.py           # User model (UUID PK, email, custom fields)
+├── products/migrations/
+│   ├── __init__.py
+│   └── 0001_initial.py           # Product, Category models
+├── orders/migrations/
+│   ├── __init__.py
+│   ├── 0001_initial.py           # Order, OrderItem models
+│   └── 0002_initial.py           # Order refinements
+└── payments/migrations/
+    ├── __init__.py
+    └── 0001_initial.py           # Payment model
+```
+
+Run migrations with:
+```bash
+python manage.py migrate           # Local
+docker-compose up --build          # Docker (auto-runs migrations)
+```
+
+### Docker Configuration
+Complete Docker setup for containerized deployment:
+
+| File | Description |
+|------|-------------|
+| `docker-compose.yml` | Defines 3 services: `backend`, `frontend`, `redis` with volumes and health checks |
+| `backend/Dockerfile` | Python 3.9-slim, installs dependencies, runs Gunicorn with 3 workers |
 
 ```bash
-# Clone the repository
+# Clone and start
 git clone https://github.com/Preome/E-commerce-Ordering-Payment-System.git
 cd E-commerce-Ordering-Payment-System
-
-# Start with Docker
 docker-compose up --build -d
+
+# Verify
+docker-compose ps
+# NAME                 IMAGE                       STATUS   PORTS
+# ecommerce_backend    ecommerceordering-backend   Up       0.0.0.0:8000->8000/tcp
+# ecommerce_frontend   node:18-alpine              Up       0.0.0.0:3000->3000/tcp
+# ecommerce_redis      redis:7-alpine              Up       0.0.0.0:6379->6379/tcp
 ```
 
 ## Tech Stack
