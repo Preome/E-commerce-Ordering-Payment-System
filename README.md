@@ -7,7 +7,6 @@ Full-stack backend system for managing users, products, orders, and payments wit
 | Resource | URL |
 |----------|-----|
 | **Frontend (Vercel)** | https://e-commerce-ordering-payment-system-beta.vercel.app/ |
-| **Backend (ngrok)** | https://familiar-unmolded-derived.ngrok-free.dev |
 | **Public Repository** | https://github.com/Preome/E-commerce-Ordering-Payment-System |
 | **Swagger API Docs** | https://familiar-unmolded-derived.ngrok-free.dev/swagger/ |
 
