@@ -7,9 +7,9 @@ Full-stack backend system for managing users, products, orders, and payments wit
 | Resource | URL |
 |----------|-----|
 | **Frontend (Vercel)** | https://e-commerce-ordering-payment-system-beta.vercel.app/ |
-| **Backend (ngrok)** | https://familiar-unmolded-derived.ngrok-free.dev |
+| **Backend (ngrok)** | https://your-ngrok-url.ngrok-free.dev |
 | **Public Repository** | https://github.com/Preome/E-commerce-Ordering-Payment-System |
-| **Swagger API Docs** | https://familiar-unmolded-derived.ngrok-free.dev/swagger/ |
+| **Swagger API Docs** | https://your-ngrok-url.ngrok-free.dev/swagger/ |
 
 ## Public Repository Deliverables
 
@@ -753,7 +753,7 @@ python manage.py test tests
 
 1. Push frontend to GitHub
 2. Connect repo to Vercel
-3. Set environment variable: `VITE_API_URL=https://familiar-unmolded-derived.ngrok-free.dev`
+3. Set environment variable: `VITE_API_URL=https://your-ngrok-url.ngrok-free.dev`
 4. Deploy
 
 ### Environment Configuration Guide
@@ -784,7 +784,7 @@ cp backend/.env.example backend/.env
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | Backend API URL (local: `http://localhost:8000`, prod: `https://familiar-unmolded-derived.ngrok-free.dev`) |
+| `VITE_API_URL` | Backend API URL (local: `http://localhost:8000`, prod: `https://your-ngrok-url.ngrok-free.dev`) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (same as backend) |
 
 ### Backend with ngrok (Local Testing)
@@ -832,20 +832,20 @@ python manage.py runserver 0.0.0.0:8000
 ngrok http 8000
 ```
 
-This gives you a public URL like: `https://familiar-unmolded-derived.ngrok-free.dev`
+This gives you a public URL like: `https://your-ngrok-url.ngrok-free.dev`
 
 **Step 5: Update environment variables**
 
 ```bash
 # In backend/.env - update these with your ngrok URL:
-BACKEND_URL=https://familiar-unmolded-derived.ngrok-free.dev
+BACKEND_URL=https://your-ngrok-url.ngrok-free.dev
 STRIPE_WEBHOOK_SECRET=whsec_...  # From Stripe dashboard webhook config
 
 # In frontend/.env:
-VITE_API_URL=https://familiar-unmolded-derived.ngrok-free.dev
+VITE_API_URL=https://your-ngrok-url.ngrok-free.dev
 
 # In Stripe Dashboard (https://dashboard.stripe.com/webhooks):
-# Add endpoint: https://familiar-unmolded-derived.ngrok-free.dev/api/v1/payments/webhook/stripe/
+# Add endpoint: https://your-ngrok-url.ngrok-free.dev/api/v1/payments/webhook/stripe/
 # Select events: payment_intent.succeeded, payment_intent.payment_failed
 ```
 
@@ -853,10 +853,10 @@ VITE_API_URL=https://familiar-unmolded-derived.ngrok-free.dev
 
 ```bash
 # Test API via ngrok
-curl https://familiar-unmolded-derived.ngrok-free.dev/swagger/
+curl https://your-ngrok-url.ngrok-free.dev/swagger/
 
 # Test Stripe webhook
-curl -X POST https://familiar-unmolded-derived.ngrok-free.dev/api/v1/payments/webhook/stripe/ \
+curl -X POST https://your-ngrok-url.ngrok-free.dev/api/v1/payments/webhook/stripe/ \
   -H "Content-Type: application/json" \
   -d '{"type": "payment_intent.succeeded"}'
 ```
@@ -897,7 +897,7 @@ docker-compose up --build -d
 ngrok http 8000
 
 # Update Stripe webhook endpoint with ngrok URL:
-# https://familiar-unmolded-derived.ngrok-free.dev/api/v1/payments/webhook/stripe/
+# https://your-ngrok-url.ngrok-free.dev/api/v1/payments/webhook/stripe/
 ```
 
 Verify all services are running:
