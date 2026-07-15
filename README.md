@@ -2,6 +2,32 @@
 
 Full-stack backend system for managing users, products, orders, and payments with support for multiple payment providers (Stripe, bKash).
 
+## Live Links
+
+| Resource | URL |
+|----------|-----|
+| **Frontend (Vercel)** | https://e-commerce-ordering-payment-system-beta.vercel.app/ |
+| **Backend (ngrok)** | https://your-ngrok-url.ngrok-free.app (replace with your active ngrok URL) |
+| **Public Repository** | https://github.com/Preome/E-commerce-Ordering-Payment-System |
+| **Swagger API Docs** | https://your-ngrok-url.ngrok-free.app/swagger/ |
+
+## Public Repository Deliverables
+
+This repository includes all required deliverables:
+
+- **README.md** - Full system documentation (this file)
+- **Migrations** - All Django database migrations (`backend/*/migrations/`)
+- **Docker Configuration** - `docker-compose.yml` + `backend/Dockerfile` for full containerized deployment
+
+```bash
+# Clone the repository
+git clone https://github.com/Preome/E-commerce-Ordering-Payment-System.git
+cd E-commerce-Ordering-Payment-System
+
+# Start with Docker
+docker-compose up --build -d
+```
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -13,7 +39,7 @@ Full-stack backend system for managing users, products, orders, and payments wit
 | Payments | Stripe SDK + bKash Tokenized Checkout |
 | API Docs | Swagger (drf-yasg) |
 | Auth | Token-based (DRF TokenAuthentication) |
-| Deployment | Docker Compose (Postgres, Redis, Backend, Frontend) |
+| Deployment | Docker Compose (SQLite/Postgres, Redis, Backend, Frontend) |
 
 ---
 
@@ -92,7 +118,8 @@ Full-stack backend system for managing users, products, orders, and payments wit
             ▼                         ▼
 ┌──────────────────┐    ┌──────────────────────┐
 │   PostgreSQL      │    │      Redis            │
-│   (primary DB)    │    │  (category cache,     │
+│   (prod) /        │    │  (category cache,     │
+│   SQLite (dev)    │    │   DFS cache,           │
 │                    │    │   DFS cache,           │
 │  Users             │    │   product recs)        │
 │  Categories        │    └──────────────────────┘
@@ -222,6 +249,16 @@ All endpoints are prefixed with `/api/v1/`. Interactive Swagger docs available a
 | GET | `/api/v1/products/categories/{id}/` | Category detail | No |
 | GET | `/api/v1/products/categories/hierarchy/` | DFS category tree | No |
 | GET | `/api/v1/products/{id}/recommendations/` | Related products | No |
+
+**Product List Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `category` | UUID | Filter by category ID |
+| `status` | string | `active`, `inactive`, or `all` (default: `active`) |
+| `search` | string | Search by name or SKU |
+| `min_price` | decimal | Minimum price filter |
+| `max_price` | decimal | Maximum price filter |
 
 ### Orders
 
@@ -474,20 +511,28 @@ Cache is invalidated on category create/update/delete. Falls back to LocMemCache
 │   ├── .env.example
 │   ├── ecommerce_backend/       # Django project settings
 │   │   ├── settings.py
+│   │   ├── test_settings.py
 │   │   ├── urls.py
 │   │   └── exceptions.py
 │   ├── users/                   # User management
 │   │   ├── models.py            # User model + UserDAO
 │   │   ├── views.py
 │   │   ├── serializers.py
-│   │   └── tests.py
+│   │   ├── urls.py
+│   │   ├── tests.py
+│   │   └── management/commands/
+│   │       └── seed_data.py     # Seeder command
 │   ├── products/                # Product & Category management
 │   │   ├── models.py            # Product, Category, CategoryHierarchy
 │   │   ├── views.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
 │   │   └── tests.py
 │   ├── orders/                  # Order & OrderItem management
 │   │   ├── models.py            # Order, OrderItem, OrderManager
 │   │   ├── views.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
 │   │   └── tests.py
 │   ├── payments/                # Payment system
 │   │   ├── models.py            # Payment model + PaymentManager
@@ -495,6 +540,9 @@ Cache is invalidated on category create/update/delete. Falls back to LocMemCache
 │   │   ├── stripe_provider.py   # Stripe implementation
 │   │   ├── bkash_provider.py    # bKash implementation
 │   │   ├── views.py             # Webhook handlers
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   ├── apps.py              # Provider registration
 │   │   └── tests.py
 │   └── tests/                   # API integration tests
 │       ├── test_auth.py
@@ -504,12 +552,26 @@ Cache is invalidated on category create/update/delete. Falls back to LocMemCache
 └── frontend/
     ├── package.json
     ├── vite.config.js
+    ├── .env
     └── src/
         ├── App.jsx
+        ├── main.jsx
         ├── context/AuthContext.jsx
         ├── services/api.js
         ├── components/
+        │   ├── Navbar.jsx
+        │   └── AdminRoute.jsx
         └── pages/
+            ├── Home.jsx
+            ├── Login.jsx
+            ├── Register.jsx
+            ├── Products.jsx
+            ├── ProductDetail.jsx
+            ├── Cart.jsx
+            ├── Orders.jsx
+            ├── Payments.jsx
+            ├── AdminProducts.jsx
+            └── AdminProductForm.jsx
 ```
 
 ---
@@ -553,8 +615,32 @@ npm run dev
 ```
 
 Default accounts seeded:
-- Admin: `admin@example.com` / `admin123!`
+- Admin: `admin@example.com` / `admin123!` (is_staff, is_superuser)
 - User: `user@example.com` / `user123!`
+
+Seeded products:
+
+| Name | SKU | Price | Stock | Category |
+|------|-----|-------|-------|----------|
+| iPhone 15 Pro | ELEC-001 | $999.99 | 50 | Smartphones |
+| Samsung Galaxy S24 | ELEC-002 | $899.99 | 40 | Smartphones |
+| MacBook Pro 14" | ELEC-003 | $1,999.99 | 25 | Laptops |
+| Dell XPS 15 | ELEC-004 | $1,299.99 | 30 | Laptops |
+| Sony WH-1000XM5 | ELEC-005 | $349.99 | 60 | Headphones |
+| Classic Cotton T-Shirt | CLTH-001 | $29.99 | 200 | Men's Wear |
+| Summer Floral Dress | CLTH-002 | $59.99 | 150 | Women's Wear |
+| Non-Stick Cookware Set | HOME-001 | $149.99 | 35 | Cookware |
+| Python Crash Course | BOOK-001 | $39.99 | 100 | Books |
+| Yoga Mat Premium | SPRT-001 | $49.99 | 80 | Sports |
+
+Docker backend startup command:
+```bash
+# Automatic on container start:
+python manage.py migrate --noinput &&
+python manage.py seed_data &&
+python manage.py collectstatic --noinput &&
+gunicorn ecommerce_backend.wsgi:application --bind 0.0.0.0:8000 --workers 3
+```
 
 ---
 
@@ -590,6 +676,7 @@ python manage.py test tests
 |----------|-------------|---------|
 | `DJANGO_SECRET_KEY` | Django secret key | - |
 | `DJANGO_DEBUG` | Debug mode | `True` |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated allowed hosts | `localhost,127.0.0.1` |
 | `DATABASE_URL` | PostgreSQL connection string | `sqlite:///db.sqlite3` |
 | `REDIS_URL` | Redis connection string | (empty, uses LocMemCache) |
 | `STRIPE_SECRET_KEY` | Stripe secret key | - |
@@ -599,8 +686,62 @@ python manage.py test tests
 | `BKASH_APP_SECRET` | bKash app secret | - |
 | `BKASH_USERNAME` | bKash API username | - |
 | `BKASH_PASSWORD` | bKash API password | - |
-| `BKASH_BASE_URL` | bKash API base URL | sandbox |
+| `BKASH_BASE_URL` | bKash API base URL | `https://sandbox.pay.bkaedu.com/v1.2.0-beta` |
+| `BKASH_CHECKOUT_URL` | bKash checkout endpoint | `{BKASH_BASE_URL}/checkout/payment/create` |
+| `BKASH_EXECUTE_URL` | bKash execute endpoint | `{BKASH_BASE_URL}/checkout/payment/execute` |
+| `BKASH_QUERY_URL` | bKash query endpoint | `{BKASH_BASE_URL}/checkout/payment/status` |
 | `FRONTEND_URL` | Frontend URL for CORS/callbacks | `http://localhost:3000` |
+| `BACKEND_URL` | Backend URL for redirects | `http://localhost:8000` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated CORS origins | `http://localhost:3000,http://127.0.0.1:3000` |
+
+---
+
+## Backend Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| django | 4.2.30 | Web framework |
+| djangorestframework | 3.15.2 | REST API framework |
+| django-environ | 0.14.0 | Environment variable management |
+| django-cors-headers | 4.3.1 | CORS handling |
+| django-redis | 6.0.0 | Redis cache backend |
+| stripe | 15.3.0 | Stripe payment SDK |
+| requests | 2.32.3 | HTTP client (bKash API) |
+| PyJWT | 2.9.0 | JSON Web Token handling |
+| drf-yasg | 1.21.15 | Swagger/ReDoc API docs |
+| psycopg2-binary | 2.9.10 | PostgreSQL adapter |
+| whitenoise | 6.7.0 | Static file serving |
+| gunicorn | 22.0.0 | WSGI HTTP server |
+| redis | 7.0.1 | Redis Python client |
+
+---
+
+## DRF Configuration
+
+- **Default Auth:** `TokenAuthentication`, `SessionAuthentication`
+- **Default Permission:** `IsAuthenticated`
+- **Pagination:** `PageNumberPagination`, page size = 20
+- **Throttling:** Anonymous = 100 req/hr, Authenticated = 1000 req/hr
+- **Exception Handler:** Custom structured JSON responses (`success`, `error`, `status_code`)
+
+---
+
+## Frontend Routes
+
+| Route | Page | Auth Required | Admin Only |
+|-------|------|---------------|------------|
+| `/` | Home | No | No |
+| `/login` | Login | No | No |
+| `/register` | Register | No | No |
+| `/products` | Products | No | No |
+| `/products/:id` | Product Detail | No | No |
+| `/cart` | Cart | Yes | No |
+| `/orders` | Orders | Yes | No |
+| `/payments` | Payments | Yes | No |
+| `/admin/products` | Admin Products | Yes | Yes |
+| `/admin/products/new`, `/admin/products/:id/edit` | Admin Product Form | Yes | Yes |
+
+**Frontend Dependencies:** React 18, Vite 5, React Router 6, Axios, Stripe React SDK, react-hot-toast
 
 ---
 
@@ -608,22 +749,116 @@ python manage.py test tests
 
 ### Frontend on Vercel
 
+**Live URL:** https://e-commerce-ordering-payment-system-beta.vercel.app/
+
 1. Push frontend to GitHub
 2. Connect repo to Vercel
-3. Set environment variable: `VITE_API_URL=https://your-backend-url.com`
+3. Set environment variable: `VITE_API_URL=https://your-ngrok-url.ngrok-free.app`
 4. Deploy
+
+### Environment Configuration Guide
+
+All environment variables are managed via `backend/.env`. A `.env.example` file is provided.
+
+```bash
+# 1. Copy the example env file
+cp backend/.env.example backend/.env
+
+# 2. Edit backend/.env with your actual keys
+```
+
+**Required variables:**
+
+| Variable | Description | Where to Get |
+|----------|-------------|--------------|
+| `DJANGO_SECRET_KEY` | Django secret key | Generate with `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` |
+| `STRIPE_SECRET_KEY` | Stripe secret key | https://dashboard.stripe.com/apikeys |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key | https://dashboard.stripe.com/apikeys |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | https://dashboard.stripe.com/webhooks |
+| `BKASH_APP_KEY` | bKash app key | https://developer.bka.sh/ |
+| `BKASH_APP_SECRET` | bKash app secret | https://developer.bka.sh/ |
+| `BKASH_USERNAME` | bKash API username | https://developer.bka.sh/ |
+| `BKASH_PASSWORD` | bKash API password | https://developer.bka.sh/ |
+
+**Frontend env** (`frontend/.env`):
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Backend API URL (local: `http://localhost:8000`, prod: ngrok URL) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (same as backend) |
 
 ### Backend with ngrok (Local Testing)
 
+ngrok is required to expose your local backend to the internet for:
+- Stripe webhook testing
+- bKash callback handling
+- Frontend (Vercel) API access
+
+**Step 1: Install ngrok**
+
 ```bash
-# Start backend
-cd backend && python manage.py runserver 0.0.0.0:8000
+# Windows (Chocolatey)
+choco install ngrok
 
-# Expose via ngrok
+# macOS (Homebrew)
+brew install ngrok/ngrok/ngrok
+
+# Or download from https://ngrok.com/download
+```
+
+**Step 2: Authenticate ngrok**
+
+```bash
+ngrok config add-authtoken YOUR_AUTH_TOKEN
+# Get your token at https://dashboard.ngrok.com/get-started/your-authtoken
+```
+
+**Step 3: Start backend locally**
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+cp .env.example .env           # Edit with your keys
+python manage.py migrate
+python manage.py seed_data
+python manage.py runserver 0.0.0.0:8000
+```
+
+**Step 4: Start ngrok tunnel**
+
+```bash
 ngrok http 8000
+```
 
-# Use the ngrok URL for Stripe webhook endpoint:
-# https://your-ngrok-url/api/v1/payments/webhook/stripe/
+This gives you a public URL like: `https://abc123.ngrok-free.app`
+
+**Step 5: Update environment variables**
+
+```bash
+# In backend/.env - update these with your ngrok URL:
+BACKEND_URL=https://abc123.ngrok-free.app
+STRIPE_WEBHOOK_SECRET=whsec_...  # From Stripe dashboard webhook config
+
+# In frontend/.env:
+VITE_API_URL=https://abc123.ngrok-free.app
+
+# In Stripe Dashboard (https://dashboard.stripe.com/webhooks):
+# Add endpoint: https://abc123.ngrok-free.app/api/v1/payments/webhook/stripe/
+# Select events: payment_intent.succeeded, payment_intent.payment_failed
+```
+
+**Step 6: Verify ngrok is working**
+
+```bash
+# Test API via ngrok
+curl https://abc123.ngrok-free.app/swagger/
+
+# Test Stripe webhook
+curl -X POST https://abc123.ngrok-free.app/api/v1/payments/webhook/stripe/ \
+  -H "Content-Type: application/json" \
+  -d '{"type": "payment_intent.succeeded"}'
 ```
 
 ### Docker Deployment
@@ -634,10 +869,57 @@ docker-compose up --build -d
 # Check services
 docker-compose ps
 docker-compose logs backend
+docker-compose logs frontend
 ```
 
-Services:
-- `db`: PostgreSQL on port 5432
-- `redis`: Redis on port 6379
-- `backend`: Django/Gunicorn on port 8000
-- `frontend`: Vite dev server on port 3000
+**docker-compose.yml services:**
+
+| Service | Image | Port | Depends On |
+|---------|-------|------|------------|
+| `redis` | `redis:7-alpine` | 6379 | - |
+| `backend` | Built from `./backend/Dockerfile` | 8000 | Redis (healthy) |
+| `frontend` | `node:18-alpine` | 3000 | - |
+
+**Named Volumes:** `redis_data`, `static_files`
+
+**Backend Dockerfile** (`backend/Dockerfile`):
+- Base: `python:3.9-slim`
+- Installs: `gcc`, `libpq-dev` (for psycopg2)
+- Runs: `gunicorn` with 3 workers on port 8000
+- Auto-runs: `migrate`, `seed_data`, `collectstatic` on startup
+
+**Docker with ngrok** (for webhook testing):
+```bash
+# Terminal 1: Start Docker services
+docker-compose up --build -d
+
+# Terminal 2: Start ngrok pointing to Docker backend
+ngrok http 8000
+
+# Update Stripe webhook endpoint with ngrok URL:
+# https://your-ngrok-url.ngrok-free.app/api/v1/payments/webhook/stripe/
+```
+
+Verify all services are running:
+```bash
+docker-compose ps
+
+# Expected output:
+# NAME                 IMAGE                       STATUS          PORTS
+# ecommerce_backend    ecommerceordering-backend   Up             0.0.0.0:8000->8000/tcp
+# ecommerce_frontend   node:18-alpine              Up             0.0.0.0:3000->3000/tcp
+# ecommerce_redis      redis:7-alpine              Up (healthy)   0.0.0.0:6379->6379/tcp
+```
+
+Backend auto-runs migrations, seeds data, and collects static files on startup. Seed data includes:
+- **Admin**: `admin@example.com` / `admin123!`
+- **User**: `user@example.com` / `user123!`
+- **11 categories** (5 root + 6 subcategories)
+- **10 products** with sample data
+
+To re-seed manually:
+```bash
+docker-compose exec backend python manage.py seed_data
+# With --clear flag to wipe existing data first:
+docker-compose exec backend python manage.py seed_data --clear
+```
